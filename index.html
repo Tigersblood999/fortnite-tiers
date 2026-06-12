@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad Live Tier List</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        :root {
+            --s-tier: #ff7f7f; --a-tier: #ffbf7f; --b-tier: #ffff7f;
+            --c-tier: #7fff7f; --d-tier: #7fbfff; --f-tier: #ff7fff;
+            --bg-color: #121212; --container-bg: #1e1e1e;
+        }
+        body { background-color: var(--bg-color); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding: 20px; }
+        h1 { font-size: 2rem; margin-bottom: 5px; }
+        p.subtitle { color: #aaa; margin-bottom: 20px; font-size: 0.9rem; }
+        
+        /* Main Tier List */
+        .tier-list { max-width: 900px; margin: 0 auto 30px auto; display: flex; flex-direction: column; gap: 5px; background-color: #000; border: 2px solid #333; }
+        .tier-row { display: flex; min-height: 80px; background-color: var(--container-bg); border-bottom: 2px solid #000; }
+        .tier-row:last-child { border-bottom: none; }
+        .tier-label { width: 80px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; color: #000; border-right: 2px solid #000; }
+        .tier-content { flex-grow: 1; display: flex; flex-wrap: wrap; padding: 10px; gap: 8px; align-items: flex-start; min-height: 60px; }
+        
+        /* Bank */
+        .bank-container { max-width: 900px; margin: 0 auto; background-color: var(--container-bg); padding: 20px; border-radius: 8px; border: 2px solid #333; }
+        .bank { display: flex; flex-wrap: wrap; gap: 8px; min-height: 100px; justify-content: center; }
+        .season-card { background-color: #2b2b2b; color: #fff; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: grab; user-select: none; border: 1px solid #444; font-size: 0.9rem; }
+        .season-card:active { cursor: grabbing; }
+        
+        /* Colors */
+        .s-label { background-color: var(--s-tier); } .a-label { background-color: var(--a-tier); } .b-label { background-color: var(--b-tier); }
+        .c-label { background-color: var(--c-tier); } .d-label { background-color: var(--d-tier); } .f-label { background-color: var(--f-tier); }
+
+        /* Live Squad Board */
+        .comparison-section { margin-top: 60px; padding-top: 30px; border-top: 2px dashed #444; max-width: 900px; margin-left: auto; margin-right: auto; }
+        .mini-boards-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top: 20px; }
+        .mini-board { background: #111; border: 1px solid #333; border-radius: 6px; padding: 15px; flex: 1; min-width: 300px; max-width: 430px; text-align: left;}
+        .mini-board h3 { margin: 0 0 15px 0; border-bottom: 1px solid #333; padding-bottom: 10px; color: #00ff88;}
+        .mini-tier { display: flex; margin-bottom: 5px; background: #1e1e1e; border: 1px solid #000; min-height: 35px;}
+        .mini-label { width: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; font-size: 1rem;}
+        .mini-content { padding: 5px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;}
+        .mini-item { background: #333; padding: 4px 8px; border-radius: 3px; border: 1px solid #555; font-size: 0.8rem; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <h1>Live Squad Tier List</h1>
+    <p class="subtitle" id="welcome-msg">Connecting to live server...</p>
+
+    <div class="tier-list" id="tier-list-container">
+        <div class="tier-row"><div class="tier-label s-label">S</div><div class="tier-content dropzone" id="tier-s"></div></div>
+        <div class="tier-row"><div class="tier-label a-label">A</div><div class="tier-content dropzone" id="tier-a"></div></div>
+        <div class="tier-row"><div class="tier-label b-label">B</div><div class="tier-content dropzone" id="tier-b"></div></div>
+        <div class="tier-row"><div class="tier-label c-label">C</div><div class="tier-content dropzone" id="tier-c"></div></div>
+        <div class="tier-row"><div class="tier-label d-label">D</div><div class="tier-content dropzone" id="tier-d"></div></div>
+        <div class="tier-row"><div class="tier-label f-label">F</div><div class="tier-content dropzone" id="tier-f"></div></div>
+    </div>
+
+    <div class="bank-container">
+        <div class="bank dropzone" id="tier-bank"></div>
+    </div>
+
+    <div class="comparison-section">
+        <h2>Live Squad Board</h2>
+        <p class="subtitle">Watch the group's lists update in real-time below.</p>
+        <div class="mini-boards-grid" id="comparison-container">
+            <p style="color: #666; font-style: italic;">Waiting for others to join...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // ==========================================
+        // 🚨 PASTE YOUR FIREBASE CONFIG HERE 🚨
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkF_wGPaNfd6Dn5F49UXInXT9cItAI1sI",
+            authDomain: "fortnite-tiers.firebaseapp.com",
+            databaseURL: "https://fortnite-tiers-default-rtdb.firebaseio.com",
+            projectId: "fortnite-tiers",
+            storageBucket: "fortnite-tiers.firebasestorage.app",
+            messagingSenderId: "897398103633",
+            appId: "1:897398103633:web:31fae8bf827fbb1ad82270"
+        };
+        // ==========================================
+
+        const seasonsData = [
+            "C1 S1", "C1 S2", "C1 S3", "C1 S4", "C1 S5", "C1 S6", "C1 S7", "C1 S8", "C1 S9", "C1 X",
+            "C2 S1", "C2 S2", "C2 S3", "C2 S4", "C2 S5", "C2 S6", "C2 S7", "C2 S8",
+            "C3 S1", "C3 S2", "C3 S3", "C3 S4", "C4 S1", "C4 S2", "C4 S3", "C4 S4", "OG",
+            "C5 S1", "C5 S2", "C5 S3"
+        ];
+        const tierIds = ['tier-s', 'tier-a', 'tier-b', 'tier-c', 'tier-d', 'tier-f', 'tier-bank'];
+
+        // Get Player Name
+        let myName = localStorage.getItem('fortniteName');
+        if (!myName) {
+            myName = prompt("Enter your name for the squad board:") || "Anonymous Player";
+            localStorage.setItem('fortniteName', myName);
+        }
+        document.getElementById('welcome-msg').innerText = `Welcome, ${myName}. Drag to rank.`;
+
+        // Generate Cards
+        const bankElement = document.getElementById('tier-bank');
+        seasonsData.forEach((name, id) => {
+            const el = document.createElement('div');
+            el.className = 'season-card'; el.textContent = name; el.setAttribute('data-id', id);
+            bankElement.appendChild(el);
+        });
+
+        // Init Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        let myUid = null;
+
+        // Login Anonymously
+        signInAnonymously(auth);
+        onAuthStateChanged(auth, (user) => {
+            if (user) { myUid = user.uid; syncMyList(); }
+        });
+
+        // Setup Drag & Drop
+        document.querySelectorAll('.dropzone').forEach(zone => {
+            new Sortable(zone, {
+                group: 'shared', animation: 150, delayOnTouchOnly: true, delay: 100, 
+                onEnd: syncMyList 
+            });
+        });
+
+        // Save My List to DB
+        function syncMyList() {
+            if (!myUid) return;
+            let stateArray = [];
+            tierIds.forEach(tierId => {
+                const container = document.getElementById(tierId);
+                const items = Array.from(container.children).map(el => el.getAttribute('data-id'));
+                stateArray.push(items.join('-'));
+            });
+            set(ref(db, 'tierlists/' + myUid), { name: myName, data: stateArray.join('_'), time: Date.now() });
+        }
+
+        // Listen for Squad Updates
+        onValue(ref(db, 'tierlists'), (snapshot) => {
+            const allLists = snapshot.val();
+            const container = document.getElementById('comparison-container');
+            container.innerHTML = '';
+            let count = 0;
+
+            const colors = ['var(--s-tier)', 'var(--a-tier)', 'var(--b-tier)', 'var(--c-tier)', 'var(--d-tier)', 'var(--f-tier)'];
+            const labels = ['S', 'A', 'B', 'C', 'D', 'F'];
+
+            for (const uid in allLists) {
+                if (uid === myUid) continue; // Don't show your own list in the bottom section
+                count++;
+                const friend = allLists[uid];
+                let boardHtml = `<div class="mini-board"><h3>${friend.name}'s Rank</h3>`;
+                
+                const tierLayouts = friend.data.split('_');
+                for(let i = 0; i < 6; i++) {
+                    let itemsHtml = '';
+                    if(tierLayouts[i]) {
+                        const itemIds = tierLayouts[i].split('-');
+                        itemIds.forEach(id => {
+                            if(seasonsData[id]) itemsHtml += `<span class="mini-item">${seasonsData[id]}</span>`;
+                        });
+                    }
+                    boardHtml += `<div class="mini-tier"><div class="mini-label" style="background-color: ${colors[i]}">${labels[i]}</div><div class="mini-content">${itemsHtml}</div></div>`;
+                }
+                boardHtml += `</div>`;
+                container.innerHTML += boardHtml;
+            }
+            if (count === 0) container.innerHTML = '<p style="color: #666; font-style: italic;">Waiting for others to join...</p>';
+        });
+    </script>
+</body>
+</html>
