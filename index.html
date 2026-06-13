@@ -16,13 +16,13 @@
         p.subtitle { color: #aaa; margin-bottom: 20px; font-size: 0.9rem; }
         
         .tier-list { max-width: 900px; margin: 0 auto 30px auto; display: flex; flex-direction: column; gap: 5px; background-color: #000; border: 2px solid #333; }
-        .tier-row { display: flex; min-height: 100px; background-color: var(--container-bg); border-bottom: 2px solid #000; }
+        .tier-row { display: flex; min-height: 100px; background-color: var(--container-bg); border-bottom: 2px solid #000; cursor: pointer; }
         .tier-row:last-child { border-bottom: none; }
         .tier-label { width: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #000; border-right: 2px solid #000; }
         .tier-content { flex-grow: 1; display: flex; flex-wrap: wrap; padding: 10px; gap: 8px; align-items: flex-start; min-height: 80px; }
         
         .bank-container { max-width: 900px; margin: 0 auto; background-color: var(--container-bg); padding: 20px; border-radius: 8px; border: 2px solid #333; }
-        .bank { display: flex; flex-wrap: wrap; gap: 8px; min-height: 100px; justify-content: center; }
+        .bank { display: flex; flex-wrap: wrap; gap: 8px; min-height: 100px; justify-content: center; cursor: pointer; }
         
         .season-card { 
             width: 85px; 
@@ -38,10 +38,18 @@
             align-items: flex-end; 
             justify-content: center;
             padding-bottom: 5px;
-            transition: transform 0.1s, border-color 0.1s;
+            transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
         }
         .season-card:hover { border-color: #fff; }
         .season-card:active { cursor: grabbing; transform: scale(1.05); }
+
+        /* Highlight effect for tapping on mobile */
+        .season-card.selected {
+            border: 3px solid #00ff88 !important;
+            box-shadow: 0 0 15px #00ff88;
+            transform: scale(1.1);
+            z-index: 10;
+        }
 
         .text-bg {
             background-color: rgba(255, 255, 255, 0.9);
@@ -81,6 +89,7 @@
 
     <h1>Live Squad Tier List</h1>
     <p class="subtitle" id="welcome-msg">Connecting to live server...</p>
+    <p class="subtitle" style="color: #00ff88; margin-top: -15px;">Mobile users: Tap a season to select it, then tap a tier to move it.</p>
 
     <div class="tier-list" id="tier-list-container">
         <div class="tier-row"><div class="tier-label s-label">S</div><div class="tier-content dropzone" id="tier-s"></div></div>
@@ -120,51 +129,31 @@
         };
 
         const seasonsData = [
-            { id: 0, name: "Pre-Season", img: "preseason.jpg" },
-            { id: 1, name: "Season 1", img: "c1s1.jpg" },
-            { id: 2, name: "Season 2", img: "c1s2.jpg" },
-            { id: 3, name: "Season 3", img: "c1s3.jpg" },
-            { id: 4, name: "Season 4", img: "c1s4.jpg" },
-            { id: 5, name: "Season 5", img: "c1s5.jpg" },
-            { id: 6, name: "Season 6", img: "c1s6.jpg" },
-            { id: 7, name: "Season 7", img: "c1s7.jpg" },
-            { id: 8, name: "Season 8", img: "c1s8.jpg" },
-            { id: 9, name: "Season 9", img: "c1s9.jpg" },
-            { id: 10, name: "Season X", img: "c1x.jpg" },
-            { id: 11, name: "C2 Season 1", img: "c2s1.jpg" },
-            { id: 12, name: "C2 Season 2", img: "c2s2.jpg" },
-            { id: 13, name: "C2 Season 3", img: "c2s3.jpg" },
-            { id: 14, name: "C2 Season 4", img: "c2s4.jpg" },
-            { id: 15, name: "C2 Season 5", img: "c2s5.jpg" },
-            { id: 16, name: "C2 Season 6", img: "c2s6.jpg" },
-            { id: 17, name: "C2 Season 7", img: "c2s7.jpg" },
-            { id: 18, name: "C2 Season 8", img: "c2s8.jpg" },
-            { id: 19, name: "C3 Season 1", img: "c3s1.jpg" },
-            { id: 20, name: "C3 Season 2", img: "c3s2.jpg" },
-            { id: 21, name: "C3 Season 3", img: "c3s3.jpg" },
-            { id: 22, name: "C3 Season 4", img: "c3s4.jpg" },
-            { id: 23, name: "C4 Season 1", img: "c4s1.jpg" },
-            { id: 24, name: "C4 Season 2", img: "c4s2.jpg" },
-            { id: 25, name: "C4 Season 3", img: "c4s3.jpg" },
-            { id: 26, name: "C4 Season 4", img: "c4s4.jpg" },
-            { id: 27, name: "C4 Season OG", img: "c4og.jpg" },
-            { id: 28, name: "C5 Season 1", img: "c5s1.jpg" },
-            { id: 29, name: "C5 Season 2", img: "c5s2.jpg" },
-            { id: 30, name: "C5 Season 3", img: "c5s3.jpg" },
-            { id: 31, name: "C5 Season 4", img: "c5s4.jpg" },
-            { id: 32, name: "Chapter 2 Remix", img: "c2remix.jpg" },
-            { id: 33, name: "C6 Season 1", img: "c6s1.jpg" },
-            { id: 34, name: "C6 Season 2", img: "c6s2.jpg" },
-            { id: 35, name: "C6 MS1", img: "c6ms1.jpg" },
-            { id: 36, name: "C6 Season 3", img: "c6s3.jpg" },
-            { id: 37, name: "C6 Season 4", img: "c6s4.jpg" },
-            { id: 38, name: "C6 MS2", img: "c6ms2.jpg" },
-            { id: 39, name: "C7 Season 1", img: "c7s1.jpg" },
-            { id: 40, name: "C7 Season 2", img: "c7s2.jpg" },
-            { id: 41, name: "C7 Season 3", img: "c7s3.jpg" }
+            { id: 0, name: "Pre-Season", img: "preseason.jpg" }, { id: 1, name: "Season 1", img: "c1s1.jpg" },
+            { id: 2, name: "Season 2", img: "c1s2.jpg" }, { id: 3, name: "Season 3", img: "c1s3.jpg" },
+            { id: 4, name: "Season 4", img: "c1s4.jpg" }, { id: 5, name: "Season 5", img: "c1s5.jpg" },
+            { id: 6, name: "Season 6", img: "c1s6.jpg" }, { id: 7, name: "Season 7", img: "c1s7.jpg" },
+            { id: 8, name: "Season 8", img: "c1s8.jpg" }, { id: 9, name: "Season 9", img: "c1s9.jpg" },
+            { id: 10, name: "Season X", img: "c1x.jpg" }, { id: 11, name: "C2 Season 1", img: "c2s1.jpg" },
+            { id: 12, name: "C2 Season 2", img: "c2s2.jpg" }, { id: 13, name: "C2 Season 3", img: "c2s3.jpg" },
+            { id: 14, name: "C2 Season 4", img: "c2s4.jpg" }, { id: 15, name: "C2 Season 5", img: "c2s5.jpg" },
+            { id: 16, name: "C2 Season 6", img: "c2s6.jpg" }, { id: 17, name: "C2 Season 7", img: "c2s7.jpg" },
+            { id: 18, name: "C2 Season 8", img: "c2s8.jpg" }, { id: 19, name: "C3 Season 1", img: "c3s1.jpg" },
+            { id: 20, name: "C3 Season 2", img: "c3s2.jpg" }, { id: 21, name: "C3 Season 3", img: "c3s3.jpg" },
+            { id: 22, name: "C3 Season 4", img: "c3s4.jpg" }, { id: 23, name: "C4 Season 1", img: "c4s1.jpg" },
+            { id: 24, name: "C4 Season 2", img: "c4s2.jpg" }, { id: 25, name: "C4 Season 3", img: "c4s3.jpg" },
+            { id: 26, name: "C4 Season 4", img: "c4s4.jpg" }, { id: 27, name: "C4 Season OG", img: "c4og.jpg" },
+            { id: 28, name: "C5 Season 1", img: "c5s1.jpg" }, { id: 29, name: "C5 Season 2", img: "c5s2.jpg" },
+            { id: 30, name: "C5 Season 3", img: "c5s3.jpg" }, { id: 31, name: "C5 Season 4", img: "c5s4.jpg" },
+            { id: 32, name: "Chapter 2 Remix", img: "c2remix.jpg" }, { id: 33, name: "C6 Season 1", img: "c6s1.jpg" },
+            { id: 34, name: "C6 Season 2", img: "c6s2.jpg" }, { id: 35, name: "C6 MS1", img: "c6ms1.jpg" },
+            { id: 36, name: "C6 Season 3", img: "c6s3.jpg" }, { id: 37, name: "C6 Season 4", img: "c6s4.jpg" },
+            { id: 38, name: "C6 MS2", img: "c6ms2.jpg" }, { id: 39, name: "C7 Season 1", img: "c7s1.jpg" },
+            { id: 40, name: "C7 Season 2", img: "c7s2.jpg" }, { id: 41, name: "C7 Season 3", img: "c7s3.jpg" }
         ];
 
         const tierIds = ['tier-s', 'tier-a', 'tier-b', 'tier-c', 'tier-d', 'tier-f', 'tier-bank'];
+        let selectedSeasonCard = null; // Tracks the currently tapped card
 
         let myName = localStorage.getItem('fortniteName');
         if (!myName) {
@@ -183,6 +172,22 @@
             if (season.img !== "") {
                 el.style.backgroundImage = `url('${season.img}')`;
             }
+
+            // Tap-to-select logic for the cards
+            el.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevents the dropzone click from firing at the same time
+                
+                if (selectedSeasonCard === el) {
+                    // Tap same card again to deselect
+                    el.classList.remove('selected');
+                    selectedSeasonCard = null;
+                } else {
+                    // Deselect old card, select new card
+                    if (selectedSeasonCard) selectedSeasonCard.classList.remove('selected');
+                    el.classList.add('selected');
+                    selectedSeasonCard = el;
+                }
+            });
             
             bankElement.appendChild(el);
         });
@@ -197,9 +202,25 @@
             if (user) { myUid = user.uid; syncMyList(); }
         });
 
+        // Initialize dropzones for Drag & Drop AND Tap-to-drop
         document.querySelectorAll('.dropzone').forEach(zone => {
+            
+            // Tap-to-drop logic for the tiers/bank
+            zone.addEventListener('click', () => {
+                if (selectedSeasonCard) {
+                    zone.appendChild(selectedSeasonCard);
+                    selectedSeasonCard.classList.remove('selected');
+                    selectedSeasonCard = null;
+                    syncMyList(); // Update live database
+                }
+            });
+
+            // Keep normal drag-and-drop running
             new Sortable(zone, {
-                group: 'shared', animation: 150, delayOnTouchOnly: true, delay: 100, 
+                group: 'shared', 
+                animation: 150, 
+                delayOnTouchOnly: true, 
+                delay: 100, 
                 onEnd: syncMyList 
             });
         });
