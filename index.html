@@ -28,27 +28,32 @@
             width: 85px; 
             height: 85px; 
             background-color: #2b2b2b; 
-            color: #fff; 
             border-radius: 4px; 
-            font-weight: bold; 
             cursor: grab; 
             user-select: none; 
             border: 2px solid #444; 
-            font-size: 0.7rem; 
-            line-height: 1.1;
             background-size: cover;
             background-position: center;
             display: flex;
             align-items: flex-end; 
             justify-content: center;
             padding-bottom: 5px;
-            text-align: center;
-            box-shadow: inset 0 -35px 25px -10px rgba(0,0,0,0.85);
-            text-shadow: 1px 1px 2px black, -1px -1px 2px black;
             transition: transform 0.1s, border-color 0.1s;
         }
         .season-card:hover { border-color: #fff; }
         .season-card:active { cursor: grabbing; transform: scale(1.05); }
+
+        .text-bg {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            line-height: 1.1;
+            text-align: center;
+            pointer-events: none; 
+        }
         
         .s-label { background-color: var(--s-tier); } .a-label { background-color: var(--a-tier); } .b-label { background-color: var(--b-tier); }
         .c-label { background-color: var(--c-tier); } .d-label { background-color: var(--d-tier); } .f-label { background-color: var(--f-tier); }
@@ -64,7 +69,11 @@
         .mini-item { 
             width: 35px; height: 35px; background-color: #333; border-radius: 3px; 
             border: 1px solid #555; background-size: cover; background-position: center;
-            display: flex; align-items: center; justify-content: center; font-size: 0.45rem; text-align: center; line-height: 1;
+            display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;
+        }
+        .mini-item .text-bg {
+            font-size: 0.35rem;
+            padding: 1px 2px;
         }
     </style>
 </head>
@@ -99,8 +108,7 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // ==========================================
-        // 🚨 PASTE YOUR FIREBASE CONFIG HERE 🚨
+        // Firebase Config Applied
         const firebaseConfig = {
             apiKey: "AIzaSyBkF_wGPaNfd6Dn5F49UXInXT9cItAI1sI",
             authDomain: "fortnite-tiers.firebaseapp.com",
@@ -110,10 +118,8 @@
             messagingSenderId: "897398103633",
             appId: "1:897398103633:web:31fae8bf827fbb1ad82270"
         };
-        // ==========================================
 
-const seasonsData = [
-            // Chapter 1 Era
+        const seasonsData = [
             { id: 0, name: "Pre-Season", img: "preseason.jpg" },
             { id: 1, name: "Season 1", img: "c1s1.jpg" },
             { id: 2, name: "Season 2", img: "c1s2.jpg" },
@@ -125,8 +131,6 @@ const seasonsData = [
             { id: 8, name: "Season 8", img: "c1s8.jpg" },
             { id: 9, name: "Season 9", img: "c1s9.jpg" },
             { id: 10, name: "Season X", img: "c1x.jpg" },
-            
-            // Chapter 2 Era
             { id: 11, name: "C2 Season 1", img: "c2s1.jpg" },
             { id: 12, name: "C2 Season 2", img: "c2s2.jpg" },
             { id: 13, name: "C2 Season 3", img: "c2s3.jpg" },
@@ -135,44 +139,33 @@ const seasonsData = [
             { id: 16, name: "C2 Season 6", img: "c2s6.jpg" },
             { id: 17, name: "C2 Season 7", img: "c2s7.jpg" },
             { id: 18, name: "C2 Season 8", img: "c2s8.jpg" },
-            
-            // Chapter 3 Era
             { id: 19, name: "C3 Season 1", img: "c3s1.jpg" },
             { id: 20, name: "C3 Season 2", img: "c3s2.jpg" },
             { id: 21, name: "C3 Season 3", img: "c3s3.jpg" },
             { id: 22, name: "C3 Season 4", img: "c3s4.jpg" },
-            
-            // Chapter 4 Era
             { id: 23, name: "C4 Season 1", img: "c4s1.jpg" },
             { id: 24, name: "C4 Season 2", img: "c4s2.jpg" },
             { id: 25, name: "C4 Season 3", img: "c4s3.jpg" },
             { id: 26, name: "C4 Season 4", img: "c4s4.jpg" },
             { id: 27, name: "C4 Season OG", img: "c4og.jpg" },
-            
-            // Chapter 5 Era & Remix
             { id: 28, name: "C5 Season 1", img: "c5s1.jpg" },
             { id: 29, name: "C5 Season 2", img: "c5s2.jpg" },
             { id: 30, name: "C5 Season 3", img: "c5s3.jpg" },
             { id: 31, name: "C5 Season 4", img: "c5s4.jpg" },
             { id: 32, name: "Chapter 2 Remix", img: "c2remix.jpg" },
-            
-            // Chapter 6 Era
             { id: 33, name: "C6 Season 1", img: "c6s1.jpg" },
             { id: 34, name: "C6 Season 2", img: "c6s2.jpg" },
             { id: 35, name: "C6 MS1", img: "c6ms1.jpg" },
             { id: 36, name: "C6 Season 3", img: "c6s3.jpg" },
             { id: 37, name: "C6 Season 4", img: "c6s4.jpg" },
             { id: 38, name: "C6 MS2", img: "c6ms2.jpg" },
-            
-            // Chapter 7 Era
             { id: 39, name: "C7 Season 1", img: "c7s1.jpg" },
             { id: 40, name: "C7 Season 2", img: "c7s2.jpg" },
             { id: 41, name: "C7 Season 3", img: "c7s3.jpg" }
         ];
-        
+
         const tierIds = ['tier-s', 'tier-a', 'tier-b', 'tier-c', 'tier-d', 'tier-f', 'tier-bank'];
 
-        // Get Player Name
         let myName = localStorage.getItem('fortniteName');
         if (!myName) {
             myName = prompt("Enter your name for the squad board:") || "Anonymous Player";
@@ -180,35 +173,30 @@ const seasonsData = [
         }
         document.getElementById('welcome-msg').innerText = `Welcome, ${myName}. Drag to rank.`;
 
-        // Generate Cards with Background Images
         const bankElement = document.getElementById('tier-bank');
         seasonsData.forEach((season) => {
             const el = document.createElement('div');
             el.className = 'season-card'; 
-            el.textContent = season.name; 
+            el.innerHTML = `<span class="text-bg">${season.name}</span>`; 
             el.setAttribute('data-id', season.id);
             
             if (season.img !== "") {
                 el.style.backgroundImage = `url('${season.img}')`;
-                el.style.color = "transparent"; // Hides text so only the cover art shows
             }
             
             bankElement.appendChild(el);
         });
 
-        // Init Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
         let myUid = null;
 
-        // Login Anonymously
         signInAnonymously(auth);
         onAuthStateChanged(auth, (user) => {
             if (user) { myUid = user.uid; syncMyList(); }
         });
 
-        // Setup Drag & Drop
         document.querySelectorAll('.dropzone').forEach(zone => {
             new Sortable(zone, {
                 group: 'shared', animation: 150, delayOnTouchOnly: true, delay: 100, 
@@ -216,7 +204,6 @@ const seasonsData = [
             });
         });
 
-        // Save My List to DB
         function syncMyList() {
             if (!myUid) return;
             let stateArray = [];
@@ -228,7 +215,6 @@ const seasonsData = [
             set(ref(db, 'tierlists/' + myUid), { name: myName, data: stateArray.join('_'), time: Date.now() });
         }
 
-        // Listen for Squad Updates
         onValue(ref(db, 'tierlists'), (snapshot) => {
             const allLists = snapshot.val();
             const container = document.getElementById('comparison-container');
@@ -239,7 +225,7 @@ const seasonsData = [
             const labels = ['S', 'A', 'B', 'C', 'D', 'F'];
 
             for (const uid in allLists) {
-                if (uid === myUid) continue; // Don't show your own list in the bottom section
+                if (uid === myUid) continue; 
                 count++;
                 const friend = allLists[uid];
                 let boardHtml = `<div class="mini-board"><h3>${friend.name}'s Rank</h3>`;
@@ -252,8 +238,8 @@ const seasonsData = [
                         itemIds.forEach(id => {
                             const season = seasonsData.find(s => s.id == id);
                             if(season) {
-                                let styleAttr = season.img !== "" ? `style="background-image: url('${season.img}'); color: transparent;"` : '';
-                                itemsHtml += `<span class="mini-item" ${styleAttr}>${season.name}</span>`;
+                                let styleAttr = season.img !== "" ? `style="background-image: url('${season.img}');"` : '';
+                                itemsHtml += `<span class="mini-item" ${styleAttr}><span class="text-bg">${season.name}</span></span>`;
                             }
                         });
                     }
